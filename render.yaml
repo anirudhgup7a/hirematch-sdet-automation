@@ -21,6 +21,12 @@ services:
     buildCommand: npm install && npm run build
     staticPublishPath: dist
     plan: free
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: hirematch-api
+          property: host
     routes:
       - type: rewrite
         source: /*
