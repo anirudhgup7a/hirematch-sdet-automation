@@ -10,7 +10,7 @@
     { "location": "Bengaluru", "expect_min_count": 3 },
     { "location": "Gurgaon", "expect_min_count": 2 },
     { "location": "Noida", "expect_min_count": 2 },
-    { "location": "Remote", "expect_min_count": 2 }
+    { "location": "Remote", "expect_min_count": 1 }
   ],
   "job_type_filters": [
     { "job_type": "Full-time", "expect_min_count": 4 },

@@ -23,8 +23,9 @@ class TestSavedJobsAPI:
     @pytest.mark.regression
     def test_get_saved_jobs_list(self, candidate_client: HireMatchAPIClient):
         """Verify candidate can fetch their saved jobs with embedded job metadata."""
-        # Ensure at least 1 job is saved
-        candidate_client.toggle_saved_job(3)
+        toggle_res = candidate_client.toggle_saved_job(3)
+        if not toggle_res.data or not toggle_res.data.get("saved"):
+            candidate_client.toggle_saved_job(3)
         res = candidate_client.get_saved_jobs()
         assert res.status_code == 200
         assert isinstance(res.data, list)

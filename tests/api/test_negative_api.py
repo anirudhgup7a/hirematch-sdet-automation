@@ -39,8 +39,9 @@ class TestNegativeAndSecurityAPI:
 
     def test_malformed_json_body(self, api_client: HireMatchAPIClient):
         """Verify sending invalid JSON body returns HTTP 422 Unprocessable Entity."""
-        res = api_client.session.post(
-            f"{api_client.base_url}/auth/login",
+        res = api_client.request(
+            "POST",
+            "/auth/login",
             data="{invalid_json: true,",
             headers={"Content-Type": "application/json"}
         )
