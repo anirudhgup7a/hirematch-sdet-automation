@@ -1,0 +1,42 @@
+{
+  "valid_new_job": {
+    "title": "Lead SDET — Cloud Quality Engineering",
+    "company_name": "Antigravity Systems India",
+    "location": "Bengaluru",
+    "job_type": "Full-time",
+    "experience_level": "Senior (5-8 yrs)",
+    "min_experience": 5,
+    "max_experience": 8,
+    "min_salary": 2400000,
+    "max_salary": 3800000,
+    "description": "Lead the test automation and SDET team responsible for high-throughput microservices and end-to-end user journeys.",
+    "requirements": "Strong Python or Java skills, Playwright/Selenium, Docker, CI/CD pipelines, and performance testing with Locust.",
+    "skills_required": "Python, Playwright, Pytest, Docker, CI/CD, Locust"
+  },
+  "invalid_job_payloads": [
+    {
+      "scenario": "missing_title",
+      "payload": {
+        "company_name": "Test Org",
+        "location": "Bengaluru",
+        "description": "Short description of the job role",
+        "requirements": "Basic requirements here",
+        "skills_required": "Python"
+      },
+      "expected_status": 422
+    },
+    {
+      "scenario": "invalid_job_type_enum",
+      "payload": {
+        "title": "Invalid Job Type Role",
+        "company_name": "Test Org",
+        "location": "Bengaluru",
+        "job_type": "FreelanceMoonlighting",
+        "description": "Description of the invalid job role",
+        "requirements": "Requirements for the invalid role",
+        "skills_required": "Python"
+      },
+      "expected_status": 422
+    }
+  ]
+}

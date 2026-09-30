@@ -1,0 +1,20 @@
+{
+  "keyword_searches": [
+    { "keyword": "SDET", "expect_min_count": 1, "description": "Software Development Engineer in Test keyword" },
+    { "keyword": "Playwright", "expect_min_count": 2, "description": "Automation framework keyword" },
+    { "keyword": "FastAPI", "expect_min_count": 1, "description": "Backend tech stack keyword" },
+    { "keyword": "Bengaluru", "expect_min_count": 2, "description": "City location keyword in title/desc" },
+    { "keyword": "UnicornRocketScientistXYZ999", "expect_min_count": 0, "description": "Negative search - no results" }
+  ],
+  "location_filters": [
+    { "location": "Bengaluru", "expect_min_count": 3 },
+    { "location": "Gurgaon", "expect_min_count": 2 },
+    { "location": "Noida", "expect_min_count": 2 },
+    { "location": "Remote", "expect_min_count": 2 }
+  ],
+  "job_type_filters": [
+    { "job_type": "Full-time", "expect_min_count": 4 },
+    { "job_type": "Remote", "expect_min_count": 2 },
+    { "job_type": "Hybrid", "expect_min_count": 2 }
+  ]
+}

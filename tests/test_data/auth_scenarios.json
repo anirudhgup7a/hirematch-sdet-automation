@@ -1,0 +1,84 @@
+{
+  "valid_logins": [
+    {
+      "email": "candidate1@hirematch.com",
+      "password": "Password123!",
+      "expected_role": "candidate",
+      "expected_name": "Aarav Patel"
+    },
+    {
+      "email": "candidate2@hirematch.com",
+      "password": "Password123!",
+      "expected_role": "candidate",
+      "expected_name": "Sneha Reddy"
+    },
+    {
+      "email": "recruiter1@hirematch.com",
+      "password": "Password123!",
+      "expected_role": "recruiter",
+      "expected_name": "Priya Sharma"
+    },
+    {
+      "email": "recruiter2@hirematch.com",
+      "password": "Password123!",
+      "expected_role": "recruiter",
+      "expected_name": "Rajesh Verma"
+    }
+  ],
+  "invalid_logins": [
+    {
+      "scenario": "wrong_password",
+      "email": "candidate1@hirematch.com",
+      "password": "WrongPassword999!",
+      "expected_status": 401,
+      "expected_detail": "Invalid email or password"
+    },
+    {
+      "scenario": "unregistered_email",
+      "email": "ghost_user_999@hirematch.com",
+      "password": "Password123!",
+      "expected_status": 401,
+      "expected_detail": "Invalid email or password"
+    },
+    {
+      "scenario": "empty_password",
+      "email": "candidate1@hirematch.com",
+      "password": "",
+      "expected_status": 401,
+      "expected_detail": "Invalid email or password"
+    },
+    {
+      "scenario": "malformed_email",
+      "email": "not-an-email",
+      "password": "Password123!",
+      "expected_status": 422,
+      "expected_detail": "value is not a valid email address"
+    }
+  ],
+  "invalid_registrations": [
+    {
+      "scenario": "short_password",
+      "email": "test_short_pwd@example.com",
+      "password": "123",
+      "full_name": "Test User",
+      "role": "candidate",
+      "expected_status": 422
+    },
+    {
+      "scenario": "invalid_role",
+      "email": "test_invalid_role@example.com",
+      "password": "Password123!",
+      "full_name": "Test User",
+      "role": "superadmin",
+      "expected_status": 422
+    },
+    {
+      "scenario": "missing_full_name",
+      "email": "test_missing_name@example.com",
+      "password": "Password123!",
+      "full_name": "A",
+      "role": "candidate",
+      "expected_status": 422
+    }
+  ]
+}
