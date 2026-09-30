@@ -13,9 +13,10 @@ services:
       - key: PORT
         value: 10000
 
-  # Frontend React Static Site
-  - type: static
+  # Frontend React Static Site (type: web + runtime: static according to Render JSON Schema)
+  - type: web
     name: hirematch-ui
+    runtime: static
     rootDir: frontend
     buildCommand: npm install && npm run build
     staticPublishPath: dist
