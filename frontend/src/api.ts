@@ -1,11 +1,16 @@
-let rawBase = (import.meta as any).env?.VITE_API_URL || 'http://localhost:8000/api/v1';
+let defaultBase = 'http://localhost:8000/api/v1';
+if (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+  defaultBase = 'https://hirematch-api.onrender.com/api/v1';
+}
+
+let rawBase = (import.meta as any).env?.VITE_API_URL || defaultBase;
 if (rawBase && !rawBase.startsWith('http://') && !rawBase.startsWith('https://') && !rawBase.startsWith('/')) {
   rawBase = `https://${rawBase}`;
 }
 if (rawBase && !rawBase.endsWith('/api/v1') && !rawBase.endsWith('/api/v1/')) {
   rawBase = rawBase.replace(/\/+$/, '') + '/api/v1';
 }
-const BASE_URL = rawBase;
+export const BASE_URL = rawBase;
 
 export function getAuthToken(): string | null {
   return localStorage.getItem('hirematch_token');
