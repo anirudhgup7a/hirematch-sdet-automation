@@ -1,0 +1,246 @@
+name: HireMatch SDET CI Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '0 6 * * 1' # Weekly Monday 6AM regression run
+
+permissions:
+  contents: read
+
+env:
+  PYTHON_VERSION: '3.11'
+  NODE_VERSION: '20'
+
+jobs:
+  # ─────────────── LINT & STATIC ANALYSIS ───────────────
+  lint:
+    name: 🔍 Code Quality & Linting
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install flake8 black isort mypy
+          pip install -r backend/requirements.txt
+          pip install -r requirements-test.txt
+
+      - name: Run flake8 (linting)
+        run: flake8 backend/ tests/ --max-line-length=120 --statistics
+
+      - name: Run black (formatting check)
+        run: black --check backend/ tests/
+
+      - name: Run isort (import order check)
+        run: isort --check-only backend/ tests/
+
+  # ─────────────── API TESTS ───────────────
+  api-tests:
+    name: 🧪 API Test Suite
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt
+          pip install -r requirements-test.txt
+
+      - name: Seed database
+        run: |
+          cd backend && python seed.py
+        env:
+          DATABASE_URL: sqlite:///./hirematch.db
+
+      - name: Start API server
+        run: |
+          cd backend && uvicorn app.main:app --host 0.0.0.0 --port 8000 &
+          sleep 5
+        env:
+          DATABASE_URL: sqlite:///./hirematch.db
+
+      - name: Run smoke tests
+        run: |
+          pytest tests/api/ -m smoke -v --html=reports/smoke_report.html --self-contained-html
+        env:
+          API_BASE_URL: http://localhost:8000/api/v1
+
+      - name: Run API regression tests
+        run: |
+          pytest tests/api/ -m "api or regression" -v --html=reports/api_report.html --self-contained-html
+        env:
+          API_BASE_URL: http://localhost:8000/api/v1
+
+      - name: Run negative tests
+        run: |
+          pytest tests/api/ -m negative -v --html=reports/negative_report.html --self-contained-html
+        env:
+          API_BASE_URL: http://localhost:8000/api/v1
+
+      - name: Run database validation tests
+        run: |
+          pytest tests/db/ -v --html=reports/db_report.html --self-contained-html
+        env:
+          API_BASE_URL: http://localhost:8000/api/v1
+          DATABASE_URL: sqlite:///./hirematch.db
+
+      - name: Upload test reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: api-test-reports
+          path: reports/
+          retention-days: 30
+
+  # ─────────────── UI TESTS ───────────────
+  ui-tests:
+    name: 🎭 UI Automation Suite (Playwright)
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt
+          pip install -r requirements-test.txt
+
+      - name: Install Playwright browsers
+        run: python -m playwright install --with-deps chromium
+
+      - name: Install frontend dependencies
+        run: cd frontend && npm ci
+
+      - name: Build frontend
+        run: cd frontend && npm run build
+
+      - name: Seed database
+        run: cd backend && python seed.py
+        env:
+          DATABASE_URL: sqlite:///./hirematch.db
+
+      - name: Start API server
+        run: |
+          cd backend && uvicorn app.main:app --host 0.0.0.0 --port 8000 &
+          sleep 5
+        env:
+          DATABASE_URL: sqlite:///./hirematch.db
+
+      - name: Start frontend server
+        run: |
+          cd frontend && npm run preview -- --port 5173 &
+          sleep 3
+
+      - name: Run UI tests
+        run: |
+          pytest tests/ui/ -m ui -v --html=reports/ui_report.html --self-contained-html
+        env:
+          UI_BASE_URL: http://localhost:5173
+          API_BASE_URL: http://localhost:8000/api/v1
+
+      - name: Upload UI reports & screenshots
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ui-test-reports
+          path: |
+            reports/
+            screenshots/
+          retention-days: 30
+
+  # ─────────────── PERFORMANCE TESTS ───────────────
+  performance-tests:
+    name: ⚡ Performance Baseline (Locust)
+    runs-on: ubuntu-latest
+    needs: api-tests
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt
+          pip install -r requirements-test.txt
+
+      - name: Seed database
+        run: cd backend && python seed.py
+        env:
+          DATABASE_URL: sqlite:///./hirematch.db
+
+      - name: Start API server
+        run: |
+          cd backend && uvicorn app.main:app --host 0.0.0.0 --port 8000 &
+          sleep 5
+        env:
+          DATABASE_URL: sqlite:///./hirematch.db
+
+      - name: Run Locust headless performance test
+        run: |
+          locust -f tests/performance/locustfile.py \
+            --headless \
+            --users 20 \
+            --spawn-rate 5 \
+            --run-time 60s \
+            --host http://localhost:8000 \
+            --html reports/perf_report.html \
+            --csv reports/perf_stats
+        env:
+          API_BASE_URL: http://localhost:8000/api/v1
+
+      - name: Upload performance reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: performance-reports
+          path: reports/
+          retention-days: 30
+
+  # ─────────────── SUMMARY ───────────────
+  test-summary:
+    name: 📊 Test Summary
+    runs-on: ubuntu-latest
+    needs: [api-tests, ui-tests, performance-tests]
+    if: always()
+    steps:
+      - name: Test suite summary
+        run: |
+          echo "═══════════════════════════════════════════"
+          echo "  🏁 HireMatch SDET Test Pipeline Summary"
+          echo "═══════════════════════════════════════════"
+          echo "  API Tests:         ${{ needs.api-tests.result }}"
+          echo "  UI Tests:          ${{ needs.ui-tests.result }}"
+          echo "  Performance Tests: ${{ needs.performance-tests.result }}"
+          echo "═══════════════════════════════════════════"
