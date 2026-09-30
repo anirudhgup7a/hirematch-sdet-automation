@@ -14,13 +14,11 @@ services:
         value: 10000
 
   # Frontend React Static Site
-  - type: web
+  - type: static
     name: hirematch-ui
-    runtime: static
     rootDir: frontend
     buildCommand: npm install && npm run build
     staticPublishPath: dist
-    plan: free
     envVars:
       - key: VITE_API_URL
         fromService:
